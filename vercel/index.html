@@ -523,11 +523,11 @@ function startCam() {
         .then(cameras => {
             if (!cameras.length) { camError('No camera found.'); return; }
             const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
-            qrScanner.start(cam.id, { fps: 15, qrbox: { width: 230, height: 230 } }, handleScan)
+            qrScanner.start(cam.id, { fps: 30 }, handleScan)
                 .catch(err => camError(err));
         })
         .catch(() => {
-            qrScanner.start({ facingMode: 'environment' }, { fps: 15, qrbox: { width: 230, height: 230 } }, handleScan)
+            qrScanner.start({ facingMode: 'environment' }, { fps: 30 }, handleScan)
                 .catch(err => camError(err));
         });
 }
