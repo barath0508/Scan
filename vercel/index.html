@@ -400,23 +400,45 @@ window.onload = async () => {
 async function api(params) {
     const url = new URL(GAS_URL);
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-    const res = await fetch(url.toString());
+    const res = await fetch(url.toString(), {
+        method: 'GET',
+        redirect: 'follow'
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
 }
 
 /* ════════════════════════════════════════
    VENUES
 ════════════════════════════════════════ */
+// Fallback venues hardcoded — always works even if API is slow
+const FALLBACK_VENUES = [
+    'Green Building 4th Floor', 'C001', 'C002', 'C003'
+];
+
+function populateVenues(venues) {
+    const sel = document.getElementById('loginVenue');
+    // Clear existing options except placeholder
+    while (sel.options.length > 1) sel.remove(1);
+    venues.forEach(v => {
+        const o = document.createElement('option');
+        o.value = o.textContent = v;
+        sel.appendChild(o);
+    });
+}
+
 async function loadVenues() {
+    // Load fallback immediately so dropdown is never empty
+    populateVenues(FALLBACK_VENUES);
+    // Then try to load from server in background
     try {
         const data = await api({ action: 'venues' });
-        const sel = document.getElementById('loginVenue');
-        (data.venues || []).forEach(v => {
-            const o = document.createElement('option');
-            o.value = o.textContent = v;
-            sel.appendChild(o);
-        });
-    } catch (_) {}
+        if (data.venues && data.venues.length) {
+            populateVenues(data.venues);
+        }
+    } catch (_) {
+        // Fallback already loaded — no action needed
+    }
 }
 
 /* ════════════════════════════════════════

@@ -8,7 +8,7 @@ const CONFIG = {
   PRIMARY_COLOR: "#6366f1",
   SECONDARY_COLOR: "#8b5cf6",
   STAFF_PASSCODE: "2026",
-  VENUES: ["Main Entrance", "Registration Desk", "Hall A", "Food Court"],
+  VENUES: ["Green Building 4th Floor", "C001", "C002", "C003"],
   AUTHORIZED_STAFF_SHEET_NAME: "Authorized Staff",
 
   // ✅ PASTE YOUR SPREADSHEET ID HERE
