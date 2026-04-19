@@ -579,11 +579,11 @@ async function processCheckIn(token, resultId, done) {
         const res = await api({ action: 'checkin', token, venue: S.venue, name: S.name, passcode: S.passcode });
 
         if (res.success && !res.alreadyIn) {
-            document.getElementById(resultId).innerHTML = resultCard('✅', res.teamName, res.leaderName + ' — Checked in!', 'res-success');
+            document.getElementById(resultId).innerHTML = resultCard('✅', res.teamName, res.leaderName + ' · ' + (res.track || 'N/A') + ' — Checked in!', 'res-success');
             showToast('✅ ' + res.teamName + ' — Welcome!');
             loadStats();
         } else if (res.alreadyIn) {
-            document.getElementById(resultId).innerHTML = resultCard('⚠️', res.teamName, 'Already checked in.', 'res-warning');
+            document.getElementById(resultId).innerHTML = resultCard('⚠️', res.teamName, res.leaderName + ' · ' + (res.track || 'N/A') + ' — Already checked in.', 'res-warning');
             showToast('⚠️ Already scanned');
         } else {
             document.getElementById(resultId).innerHTML = resultCard('❌', 'Not Found', res.message || 'Token not found.', 'res-error');
