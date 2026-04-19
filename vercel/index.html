@@ -239,6 +239,32 @@
         .row { display: flex; gap: 10px; }
         .row input { margin-bottom: 0; }
 
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s;
+            padding: 20px;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal {
+            background: #1e293b; border: 1px solid var(--border);
+            border-radius: 20px; width: 100%; max-width: 400px;
+            padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transform: translateY(20px) scale(0.95); transition: 0.3s;
+        }
+        .modal-overlay.active .modal { transform: translateY(0) scale(1); }
+        .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 16px; }
+        .modal-title { font-size: 20px; font-weight: 800; flex: 1; }
+        .info-row { margin-bottom: 12px; }
+        .info-lbl { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .info-val { font-size: 15px; font-weight: 600; color: white; }
+        .member-list { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-top: 8px;}
+        .member-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size:14px; }
+        .member-item:last-child { margin-bottom: 0; }
+
+
         @media (max-width: 480px) {
             .stat-val { font-size: 24px; }
             .main { padding: 14px; }
@@ -369,6 +395,33 @@
 </div>
 
 <div id="toast"></div>
+
+<!-- ══════════ MODAL ══════════ -->
+<div class="modal-overlay" id="teamModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div style="font-size:32px" id="modalIcon">✅</div>
+            <div class="modal-title" id="modalTitle">Check In Success</div>
+            <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="info-row">
+                <div class="info-lbl">Team & Track</div>
+                <div class="info-val" id="modalTeam">--</div>
+                <div style="font-size:12px; color:#818cf8; margin-top:2px;" id="modalTrack">--</div>
+            </div>
+            <div class="info-row">
+                <div class="info-lbl">College</div>
+                <div class="info-val" id="modalCollege">--</div>
+            </div>
+            <div class="info-row">
+                <div class="info-lbl">Team Members</div>
+                <div class="member-list" id="modalMembers"></div>
+            </div>
+            <button class="btn btn-primary btn-full" style="margin-top: 10px;" onclick="closeModal()">Done</button>
+        </div>
+    </div>
+</div>
 
 <script>
 /* ════════════════════════════════════════
@@ -581,10 +634,12 @@ async function processCheckIn(token, resultId, done) {
         if (res.success && !res.alreadyIn) {
             document.getElementById(resultId).innerHTML = resultCard('✅', res.teamName, res.leaderName + ' · ' + (res.track || 'N/A') + ' — Checked in!', 'res-success');
             showToast('✅ ' + res.teamName + ' — Welcome!');
+            openModal(res, true);
             loadStats();
         } else if (res.alreadyIn) {
             document.getElementById(resultId).innerHTML = resultCard('⚠️', res.teamName, res.leaderName + ' · ' + (res.track || 'N/A') + ' — Already checked in.', 'res-warning');
             showToast('⚠️ Already scanned');
+            openModal(res, false);
         } else {
             document.getElementById(resultId).innerHTML = resultCard('❌', 'Not Found', res.message || 'Token not found.', 'res-error');
         }
@@ -639,6 +694,9 @@ async function searchCheckIn(row, teamName) {
     if (!confirm('Check in: ' + teamName + '?')) return;
     try {
         const res = await api({ action: 'checkin', token: row + '__ROW__', venue: S.venue, name: S.name, passcode: S.passcode });
+        if (res.success) {
+            openModal(res, !res.alreadyIn);
+        }
         showToast(res.success ? ('✅ ' + teamName + ' checked in!') : '⚠️ ' + res.message);
         doSearch(); loadStats();
     } catch (_) { showToast('❌ Error'); }
@@ -688,6 +746,39 @@ function showToast(msg) {
 
 // Auto-refresh stats every 30s
 setInterval(loadStats, 30000);
+
+/* ════════════════════════════════════════
+   MODAL
+════════════════════════════════════════ */
+function openModal(res, isSuccess) {
+    document.getElementById('modalIcon').textContent = isSuccess ? '✅' : '⚠️';
+    document.getElementById('modalTitle').textContent = isSuccess ? 'Checked In successfully' : 'Already Checked In';
+    document.getElementById('modalTitle').style.color = isSuccess ? 'var(--success)' : 'var(--warning)';
+    
+    document.getElementById('modalTeam').textContent = res.teamName || 'Unknown Team';
+    document.getElementById('modalTrack').textContent = res.track || 'No Track specified';
+    document.getElementById('modalCollege').textContent = res.college || 'College details not provided';
+    
+    const membersList = document.getElementById('modalMembers');
+    if (res.members && res.members.length > 0) {
+        membersList.innerHTML = res.members.map(m => {
+            const isLeader = m.toLowerCase().trim() === (res.leaderName || '').toLowerCase().trim();
+            const badge = isLeader ? ' <span style="background:var(--warning);color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:800;margin-left:4px;">LEADER</span>' : '';
+            return `<div class="member-item">
+                <div style="color:var(--primary)">👤</div>
+                <div>${esc(m)}${badge}</div>
+            </div>`;
+        }).join('');
+    } else {
+        membersList.innerHTML = '<div style="color:#64748b;font-size:13px;text-align:center;">No members found</div>';
+    }
+    
+    document.getElementById('teamModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('teamModal').classList.remove('active');
+}
 </script>
 </body>
 </html>
