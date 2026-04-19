@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energize 2026 | Admin Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary:   #6366f1;
+            --secondary: #8b5cf6;
+            --success:   #22c55e;
+            --warning:   #f59e0b;
+            --error:     #ef4444;
+            --bg:        #0f172a;
+            --surface:   rgba(255,255,255,0.04);
+            --border:    rgba(255,255,255,0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: white;
+            min-height: 100vh;
+        }
+
+        /* ── LOGIN SCREEN ── */
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: radial-gradient(ellipse at top, #1e1b4b 0%, #0f172a 60%);
+        }
+
+        .login-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+        }
+
+        .logo { font-size: 40px; margin-bottom: 16px; }
+        .login-card h1 { font-size: 26px; font-weight: 800; }
+        .login-card p  { color: #64748b; font-size: 13px; margin: 8px 0 28px; }
+
+        /* ── MAIN APP ── */
+        #appScreen { display: none; }
+
+        .topbar {
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+        }
+
+        .topbar-brand { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+        .topbar-info  { font-size: 11px; color: #475569; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .admin-chip {
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: #818cf8;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .main { padding: 24px; max-width: 900px; margin: 0 auto; }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-val  { font-size: 36px; font-weight: 800; line-height: 1; }
+        .stat-lbl  { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+        .stat-progress { height: 4px; background: rgba(255,255,255,0.05); border-radius: 100px; margin-top: 12px; overflow: hidden; }
+        .stat-bar      { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 1s ease; }
+
+        /* ── TABS ── */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab  {
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── SEARCH ── */
+        .search-row { display: flex; gap: 10px; margin-bottom: 18px; }
+        .search-input {
+            flex: 1; padding: 13px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white; font-family: inherit; font-size: 14px;
+        }
+        .search-input:focus { outline: none; border-color: var(--primary); }
+
+        /* ── VENUE / FORM CONTROLS ── */
+        input, select {
+            width: 100%; padding: 13px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white; font-family: inherit; font-size: 14px;
+            margin-bottom: 12px;
+        }
+        select option { background: #1e293b; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
+
+        /* ── BUTTONS ── */
+        .btn {
+            padding: 12px 20px;
+            border-radius: 10px; border: none;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn:hover    { transform: translateY(-1px); }
+        .btn-primary  { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-success  { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+        .btn-ghost    { background: var(--surface); color: #64748b; border: 1px solid var(--border); }
+        .btn-full     { width: 100%; }
+        .btn-sm       { padding: 8px 14px; font-size: 12px; }
+
+        /* ── RESULT CARDS ── */
+        .result-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .result-info { flex: 1; }
+        .result-name { font-size: 15px; font-weight: 700; }
+        .result-sub  { font-size: 12px; color: #64748b; margin-top: 3px; }
+
+        .status-pill {
+            padding: 4px 10px; border-radius: 100px;
+            font-size: 11px; font-weight: 700;
+        }
+        .pill-checked { background: rgba(34,197,94,0.15);  color: var(--success); border: 1px solid rgba(34,197,94,0.25); }
+        .pill-pending { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.25); }
+
+        /* ── LIVE FEED ── */
+        .feed-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .feed-icon {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: rgba(34,197,94,0.12);
+            border: 1px solid rgba(34,197,94,0.25);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+
+        .feed-main  { flex: 1; }
+        .feed-name  { font-size: 14px; font-weight: 700; }
+        .feed-meta  { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .feed-time  { font-size: 11px; color: #475569; text-align: right; }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: #475569;
+        }
+        .empty-state div { font-size: 40px; margin-bottom: 12px; }
+
+        /* ── TOAST ── */
+        #toast {
+            position: fixed;
+            bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #1e293b;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 13px; font-weight: 600;
+            transition: transform 0.3s ease;
+            z-index: 999;
+            white-space: nowrap;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ── LOGOUT ── */
+        .logout-btn {
+            background: rgba(239,68,68,0.12);
+            color: var(--error);
+            border: 1px solid rgba(239,68,68,0.25);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+        }
+
+        .refresh-btn {
+            background: var(--surface);
+            color: #64748b;
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+        }
+
+        @media (max-width: 480px) {
+            .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .stat-val  { font-size: 26px; }
+            .main { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="loginScreen">
+    <div class="login-card">
+        <div class="logo">⚡</div>
+        <h1>Admin Portal</h1>
+        <p>Energize 2026 Event Management</p>
+
+        <input type="password" id="loginPasscode" placeholder="Admin Passcode">
+        <input type="text"     id="loginName"     placeholder="Your Name">
+        <select id="loginVenue">
+            <option value="" disabled selected>Select Your Venue</option>
+        </select>
+        <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top: 4px;">
+            Enter Admin Portal →
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="appScreen">
+    <div class="topbar">
+        <div>
+            <div class="topbar-brand">⚡ ENERGIZE 2026</div>
+            <div class="topbar-info" id="topbarInfo">Admin Portal Ready</div>
+        </div>
+        <div class="topbar-right">
+            <div class="admin-chip" id="adminChip">Admin</div>
+            <button class="refresh-btn" onclick="refreshAll()">🔄 Refresh</button>
+            <button class="logout-btn"  onclick="doLogout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="main">
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-val" id="statTotal" style="color: #818cf8;">--</div>
+                <div class="stat-lbl">Total Registrations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="statCheckedIn" style="color: var(--success);">--</div>
+                <div class="stat-lbl">Checked In</div>
+                <div class="stat-progress"><div class="stat-bar" id="statBar" style="width:0%"></div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="statPending" style="color: var(--warning);">--</div>
+                <div class="stat-lbl">Pending</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('scan')">📷 Scan / Token</button>
+            <button class="tab"        onclick="switchTab('search')">🔍 Search</button>
+            <button class="tab"        onclick="switchTab('feed')">📋 Live Feed</button>
+        </div>
+
+        <!-- SCAN TAB -->
+        <div class="tab-content active" id="tab-scan">
+
+            <!-- CAMERA SECTION -->
+            <div id="cameraSection" style="margin-bottom:20px;">
+                <div id="cameraOff" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;text-align:center;">
+                    <div style="font-size:44px;margin-bottom:12px;">📷</div>
+                    <div style="font-weight:700;margin-bottom:6px;">Start Camera Scanner</div>
+                    <div style="font-size:12px;color:#64748b;margin-bottom:18px;">Point at any attendee QR code to check them in instantly.</div>
+                    <button class="btn btn-primary" onclick="startCamera()" style="padding:12px 28px;">Enable Camera</button>
+                </div>
+
+                <div id="cameraOn" style="display:none;">
+                    <div style="position:relative;border-radius:16px;overflow:hidden;background:#000;">
+                        <div id="adminReader"></div>
+                        <div id="scanOverlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+                            <div style="width:220px;height:220px;border:2.5px solid rgba(255,255,255,0.5);border-radius:20px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost" onclick="stopCamera()" style="width:100%;margin-top:10px;">⏹ Stop Camera</button>
+                </div>
+            </div>
+
+            <!-- SCAN RESULT -->
+            <div id="camResult"></div>
+
+            <!-- DIVIDER -->
+            <div style="font-size:12px;font-weight:700;color:#475569;text-align:center;margin:16px 0;">— OR enter token manually —</div>
+
+            <!-- MANUAL TOKEN -->
+            <div style="display:flex;gap:10px;">
+                <input type="text" id="tokenInput" placeholder="Paste Token ID  e.g. ENG26-XXXXXXXX"
+                    style="flex:1;margin-bottom:0;"
+                    onkeydown="if(event.key==='Enter') scanToken()">
+                <button class="btn btn-primary" onclick="scanToken()">Check In</button>
+            </div>
+            <div id="scanResult" style="margin-top:12px;"></div>
+        </div>
+
+        <!-- SEARCH TAB -->
+        <div class="tab-content" id="tab-search">
+            <div class="search-row">
+                <input class="search-input" type="text" id="searchInput"
+                    placeholder="Search by team name, leader, email or token…"
+                    onkeydown="if(event.key==='Enter') doSearch()">
+                <button class="btn btn-primary" onclick="doSearch()">Search</button>
+            </div>
+            <div id="searchResults">
+                <div class="empty-state">
+                    <div>🔍</div>
+                    <p>Search for a team above to check them in manually.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIVE FEED TAB -->
+        <div class="tab-content" id="tab-feed">
+            <div id="feedList">
+                <div class="empty-state"><div>⏳</div><p>Loading check-ins…</p></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast">✅ Done</div>
+
+<script>
+    /* ── State ── */
+    let S = { passcode: '', name: '', venue: '' };
+
+    /* ── Boot ── */
+    window.onload = () => {
+        loadVenues();
+        const saved = {
+            passcode: localStorage.getItem('eng26_passcode'),
+            name:     localStorage.getItem('eng26_name'),
+            venue:    localStorage.getItem('eng26_venue')
+        };
+        if (saved.passcode && saved.name && saved.venue) {
+            S = saved;
+            enterApp();
+        }
+    };
+
+    /* ── Venues ── */
+    function loadVenues() {
+        google.script.run
+            .withSuccessHandler(venues => {
+                const sel = document.getElementById('loginVenue');
+                venues.forEach(v => {
+                    const o = document.createElement('option');
+                    o.value = o.textContent = v;
+                    sel.appendChild(o);
+                });
+            })
+            .withFailureHandler(() => {
+                ['Main Entrance','Registration Desk','Hall A','Food Court'].forEach(v => {
+                    const o = document.createElement('option');
+                    o.value = o.textContent = v;
+                    document.getElementById('loginVenue').appendChild(o);
+                });
+            })
+            .getVenues();
+    }
+
+    /* ── Login ── */
+    function doLogin() {
+        const p = document.getElementById('loginPasscode').value.trim();
+        const n = document.getElementById('loginName').value.trim();
+        const v = document.getElementById('loginVenue').value;
+        if (!p || !n || !v) { alert('Please fill in all fields.'); return; }
+
+        google.script.run
+            .withSuccessHandler(ok => {
+                if (ok) {
+                    S = { passcode: p, name: n, venue: v };
+                    localStorage.setItem('eng26_passcode', p);
+                    localStorage.setItem('eng26_name',     n);
+                    localStorage.setItem('eng26_venue',    v);
+                    enterApp();
+                } else {
+                    alert('❌ Incorrect passcode.');
+                }
+            })
+            .verifyPasscode(p);
+    }
+
+    function enterApp() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display   = 'block';
+        document.getElementById('adminChip').textContent = S.name + ' · ' + S.venue;
+        refreshAll();
+    }
+
+    function doLogout() {
+        if (!confirm('Logout?')) return;
+        ['eng26_passcode','eng26_name','eng26_venue'].forEach(k => localStorage.removeItem(k));
+        location.reload();
+    }
+
+    /* ── Stats & Feed ── */
+    function refreshAll() {
+        loadStats();
+        loadFeed();
+    }
+
+    function loadStats() {
+        google.script.run
+            .withSuccessHandler(s => {
+                document.getElementById('statTotal').textContent     = s.total;
+                document.getElementById('statCheckedIn').textContent = s.checkedIn;
+                document.getElementById('statPending').textContent   = s.total - s.checkedIn;
+                document.getElementById('statBar').style.width       = s.percentage + '%';
+                document.getElementById('topbarInfo').textContent    =
+                    s.percentage + '% checked in · ' + new Date().toLocaleTimeString();
+            })
+            .getAnalytics();
+    }
+
+    function loadFeed() {
+        google.script.run
+            .withSuccessHandler(renderFeed)
+            .withFailureHandler(err => showToast('❌ ' + err.message))
+            .getRecentCheckIns(S.passcode);
+    }
+
+    function renderFeed(items) {
+        const el = document.getElementById('feedList');
+        if (!items || items.length === 0) {
+            el.innerHTML = '<div class="empty-state"><div>🎟️</div><p>No check-ins yet.</p></div>';
+            return;
+        }
+        el.innerHTML = items.map(r => `
+            <div class="feed-item">
+                <div class="feed-icon">✅</div>
+                <div class="feed-main">
+                    <div class="feed-name">${r.teamName}</div>
+                    <div class="feed-meta">${r.leaderName} · ${r.track || 'N/A'} · ${r.venue || '—'} · by <b>${r.scannerName || '—'}</b></div>
+                </div>
+                <div class="feed-time">${formatTime(r.checkinTime)}</div>
+            </div>
+        `).join('');
+    }
+
+    /* ── Camera Scanner ── */
+    let adminScanner = null;
+    let cameraProcessing = false;
+
+    function startCamera() {
+        document.getElementById('cameraOff').style.display = 'none';
+        document.getElementById('cameraOn').style.display  = 'block';
+        document.getElementById('camResult').innerHTML     = '';
+
+        adminScanner = new Html5Qrcode('adminReader');
+
+        Html5Qrcode.getCameras()
+            .then(cameras => {
+                if (!cameras || cameras.length === 0) {
+                    showCameraError('No camera found.'); return;
+                }
+                const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+                adminScanner.start(
+                    cam.id,
+                    { fps: 12, qrbox: { width: 220, height: 220 } },
+                    onCameraScan
+                ).catch(err => showCameraError(err));
+            })
+            .catch(() => {
+                adminScanner.start(
+                    { facingMode: 'environment' },
+                    { fps: 12, qrbox: { width: 220, height: 220 } },
+                    onCameraScan
+                ).catch(err => showCameraError(err));
+            });
+    }
+
+    function stopCamera() {
+        if (adminScanner) {
+            adminScanner.stop().catch(() => {});
+            adminScanner = null;
+        }
+        document.getElementById('cameraOff').style.display = 'block';
+        document.getElementById('cameraOn').style.display  = 'none';
+        cameraProcessing = false;
+    }
+
+    function showCameraError(msg) {
+        stopCamera();
+        document.getElementById('cameraOff').innerHTML = `
+            <div style="font-size:44px;margin-bottom:12px;">📷</div>
+            <div style="color:#ef4444;font-size:13px;margin-bottom:14px;">Camera error: ${msg}<br>Please allow camera permission in your browser and try again.</div>
+            <button class="btn btn-primary" onclick="startCamera()">Retry Camera</button>`;
+    }
+
+    function onCameraScan(decodedText) {
+        if (cameraProcessing) return;
+        cameraProcessing = true;
+        if (navigator.vibrate) navigator.vibrate(60);
+
+        let tokenId = decodedText;
+        try { const u = new URL(decodedText); tokenId = u.searchParams.get('id') || decodedText; } catch (_) {}
+
+        document.getElementById('camResult').innerHTML =
+            '<div class="empty-state"><div>⏳</div><p>Checking in…</p></div>';
+
+        google.script.run
+            .withSuccessHandler(res => {
+                if (res.success && !res.alreadyIn) {
+                    document.getElementById('camResult').innerHTML = `
+                        <div class="result-card" style="border-color:rgba(34,197,94,0.4);animation:slideIn 0.3s ease;">
+                            <div class="feed-icon">✅</div>
+                            <div class="result-info">
+                                <div class="result-name">${res.teamName}</div>
+                                <div class="result-sub">${res.leaderName} — Checked in!</div>
+                            </div>
+                        </div>`;
+                    showToast('✅ ' + res.teamName + ' — Checked In!');
+                    loadStats();
+                } else if (res.alreadyIn) {
+                    document.getElementById('camResult').innerHTML = `
+                        <div class="result-card" style="border-color:rgba(245,158,11,0.4);">
+                            <div style="font-size:28px">⚠️</div>
+                            <div class="result-info">
+                                <div class="result-name">${res.teamName}</div>
+                                <div class="result-sub">Already checked in.</div>
+                            </div>
+                        </div>`;
+                } else {
+                    document.getElementById('camResult').innerHTML =
+                        '<div class="empty-state"><div>❌</div><p>Ticket not found.</p></div>';
+                }
+                setTimeout(() => { cameraProcessing = false; }, 3000);
+            })
+            .withFailureHandler(err => {
+                document.getElementById('camResult').innerHTML =
+                    '<div class="empty-state"><div>❌</div><p>' + err.message + '</p></div>';
+                cameraProcessing = false;
+            })
+            .processScan(tokenId, S.venue, S.name, S.passcode);
+    }
+
+    /* ── Tabs ── */
+    function switchTab(name) {
+
+        document.querySelectorAll('.tab').forEach((t, i) => {
+            const ids = ['scan','search','feed'];
+            t.classList.toggle('active', ids[i] === name);
+        });
+        document.querySelectorAll('.tab-content').forEach(tc => {
+            tc.classList.toggle('active', tc.id === 'tab-' + name);
+        });
+        if (name === 'feed') loadFeed();
+    }
+
+    /* ── Token Scan  ── */
+    function scanToken() {
+        let raw = document.getElementById('tokenInput').value.trim();
+        if (!raw) { alert('Please paste or enter a token.'); return; }
+
+        // Extract token from full URL if pasted
+        let tokenId = raw;
+        try {
+            const u = new URL(raw);
+            tokenId = u.searchParams.get('id') || raw;
+        } catch (_) {}
+
+        tokenId = tokenId.trim();
+        document.getElementById('scanResult').innerHTML =
+            '<div class="empty-state"><div>⏳</div><p>Looking up token…</p></div>';
+
+        google.script.run
+            .withSuccessHandler(res => {
+                document.getElementById('tokenInput').value = '';
+                if (res.success) {
+                    document.getElementById('scanResult').innerHTML = `
+                        <div class="result-card" style="border-color:rgba(34,197,94,0.3);">
+                            <div class="feed-icon">✅</div>
+                            <div class="result-info">
+                                <div class="result-name">${res.teamName}</div>
+                                <div class="result-sub">${res.leaderName} — Checked in successfully</div>
+                            </div>
+                        </div>`;
+                    showToast('✅ ' + res.teamName + ' checked in!');
+                    loadStats();
+                } else if (res.alreadyIn) {
+                    document.getElementById('scanResult').innerHTML = `
+                        <div class="result-card" style="border-color:rgba(245,158,11,0.3);">
+                            <div style="font-size:28px">⚠️</div>
+                            <div class="result-info">
+                                <div class="result-name">${res.teamName}</div>
+                                <div class="result-sub">Already checked in.</div>
+                            </div>
+                        </div>`;
+                } else {
+                    document.getElementById('scanResult').innerHTML =
+                        '<div class="empty-state"><div>❌</div><p>Token not found: ' + tokenId + '</p></div>';
+                }
+            })
+            .withFailureHandler(err => {
+                document.getElementById('scanResult').innerHTML =
+                    '<div class="empty-state"><div>❌</div><p>' + err.message + '</p></div>';
+            })
+            .processScan(tokenId, S.venue, S.name, S.passcode);
+    }
+
+    /* ── Search ── */
+    function doSearch() {
+        const q = document.getElementById('searchInput').value.trim();
+        if (!q) { alert('Enter a search term.'); return; }
+
+        document.getElementById('searchResults').innerHTML =
+            '<div class="empty-state"><div>⏳</div><p>Searching…</p></div>';
+
+        google.script.run
+            .withSuccessHandler(renderResults)
+            .withFailureHandler(err => showToast('❌ ' + err.message))
+            .searchRegistration(q, S.passcode);
+    }
+
+    function renderResults(results) {
+        const el = document.getElementById('searchResults');
+        if (!results || results.length === 0) {
+            el.innerHTML = '<div class="empty-state"><div>😕</div><p>No matching registrations found.</p></div>';
+            return;
+        }
+        el.innerHTML = results.map(r => {
+            const checked = r.status === 'CHECKED_IN';
+            return `
+            <div class="result-card">
+                <div class="result-info">
+                    <div class="result-name">${r.teamName}</div>
+                    <div class="result-sub">${r.leaderName} · ${r.track || 'N/A'}</div>
+                    ${checked ? `<div class="result-sub" style="margin-top:4px;color:#475569;">
+                        Checked in by <b>${r.scannerName}</b> at ${r.venue} · ${formatTime(r.checkinTime)}
+                    </div>` : ''}
+                </div>
+                <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+                    <span class="status-pill ${checked ? 'pill-checked' : 'pill-pending'}">
+                        ${checked ? '✅ Checked In' : '⏳ Pending'}
+                    </span>
+                    ${!checked ? `<button class="btn btn-success btn-sm"
+                        onclick="doCheckIn(${r.row}, '${esc(r.teamName)}')">Check In</button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    /* ── Manual Check-In ── */
+    function doCheckIn(row, teamName) {
+        if (!confirm('Check in team: ' + teamName + '?')) return;
+        google.script.run
+            .withSuccessHandler(res => {
+                if (res.success) {
+                    showToast('✅ ' + res.teamName + ' checked in!');
+                    doSearch(); // Refresh results
+                    loadStats();
+                } else {
+                    showToast('⚠️ ' + res.message);
+                }
+            })
+            .withFailureHandler(err => showToast('❌ ' + err.message))
+            .adminCheckIn(row, S.venue, S.name, S.passcode);
+    }
+
+    /* ── Helpers ── */
+    function formatTime(str) {
+        if (!str) return '—';
+        try {
+            return new Date(str).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        } catch (_) { return str; }
+    }
+
+    function esc(s) { return String(s).replace(/'/g, "\\'"); }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Auto-refresh stats every 30 seconds
+    setInterval(loadStats, 30000);
+</script>
+</body>
+</html>

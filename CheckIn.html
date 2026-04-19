@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energize 2026 | Check-In</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #0f172a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a);
+            color: white;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container { width: 100%; max-width: 420px; }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 34px;
+        }
+
+        .icon-success { background: rgba(34,197,94,0.12); border: 2px solid rgba(34,197,94,0.3); }
+        .icon-warning { background: rgba(245,158,11,0.12); border: 2px solid rgba(245,158,11,0.3); }
+        .icon-error   { background: rgba(239,68,68,0.12);  border: 2px solid rgba(239,68,68,0.3); }
+        .icon-info    { background: rgba(99,102,241,0.12); border: 2px solid rgba(99,102,241,0.3); }
+        .icon-loading { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.1); }
+
+        h1 { font-size: 22px; margin: 0 0 6px; font-weight: 700; }
+        .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 24px; }
+
+        .details {
+            text-align: left;
+            background: rgba(0,0,0,0.2);
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+        }
+
+        .row { margin-bottom: 12px; }
+        .row:last-child { margin-bottom: 0; }
+        .lbl { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+        .val { font-size: 16px; font-weight: 600; color: #f8fafc; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 100px;
+            font-size: 11px; font-weight: 700;
+            background: rgba(99,102,241,0.2);
+            color: #818cf8;
+            border: 1px solid rgba(99,102,241,0.3);
+        }
+
+        .btn {
+            width: 100%; padding: 13px;
+            border-radius: 12px; border: none;
+            font-weight: 700; font-size: 14px; cursor: pointer;
+            transition: transform 0.15s;
+            margin-bottom: 10px;
+        }
+        .btn:last-child { margin-bottom: 0; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .btn-ghost   { background: rgba(255,255,255,0.08); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
+
+        input, select {
+            width: 100%; padding: 13px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; color: white;
+            margin-bottom: 12px;
+            font-family: inherit; font-size: 14px;
+        }
+        select option { background: #1e293b; }
+
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .footer { margin-top: 28px; font-size: 11px; color: #334155; letter-spacing: 2px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- ① PROCESSING / LOADING STATE -->
+    <div id="viewLoading" class="card" style="display:none;">
+        <div class="spinner"></div>
+        <h1>Processing…</h1>
+        <p class="subtitle">Please wait while we verify your ticket.</p>
+    </div>
+
+    <!-- ② STAFF LOGIN (first time on this device) -->
+    <div id="viewLogin" class="card" style="display:none;">
+        <div class="icon icon-info">🔐</div>
+        <h1>Staff Login</h1>
+        <p class="subtitle">Enter your details once to enable check-ins on this device.</p>
+        <input type="password" id="inPasscode" placeholder="Event Passcode" autocomplete="off">
+        <input type="text"     id="inName"     placeholder="Your Full Name">
+        <select id="inVenue">
+            <option value="" disabled selected>Select Your Venue</option>
+        </select>
+        <button class="btn btn-primary" onclick="doStaffLogin()">Enable Check-In Mode</button>
+        <button class="btn btn-ghost"   onclick="showPublicView()">Back to Ticket View</button>
+    </div>
+
+    <!-- ③ PUBLIC TICKET VIEW (no staff session) -->
+    <div id="viewPublic" class="card" style="display:none;">
+        <div class="icon icon-info">🎟️</div>
+        <h1>Valid Ticket</h1>
+        <p class="subtitle">Show this to event staff at the entrance.</p>
+        <div class="details">
+            <div class="row">
+                <div class="lbl">Team Name</div>
+                <div class="val" id="pub_team"></div>
+            </div>
+            <div class="row">
+                <div class="lbl">Team Leader</div>
+                <div class="val" id="pub_leader"></div>
+            </div>
+            <div class="row">
+                <div class="lbl">Event Track</div>
+                <div><span class="badge" id="pub_track"></span></div>
+            </div>
+            <div class="row">
+                <div class="lbl">Check-In Status</div>
+                <div class="val" id="pub_status"></div>
+            </div>
+        </div>
+        <button class="btn btn-ghost" onclick="showLogin()">Staff Check-In Login</button>
+    </div>
+
+    <!-- ④ STAFF CHECK-IN SUCCESS -->
+    <div id="viewSuccess" class="card" style="display:none;">
+        <div class="icon icon-success">✅</div>
+        <h1>Welcome!</h1>
+        <p class="subtitle" id="succ_subtitle">Checked in successfully.</p>
+        <div class="details">
+            <div class="row"><div class="lbl">Team</div><div class="val" id="succ_team"></div></div>
+            <div class="row"><div class="lbl">Leader</div><div class="val" id="succ_leader"></div></div>
+            <div class="row"><div class="lbl">Track</div><div><span class="badge" id="succ_track"></span></div></div>
+            <div class="row"><div class="lbl">Checked in by</div><div class="val" id="succ_by"></div></div>
+        </div>
+        <button class="btn btn-ghost" onclick="resetStaff()">Logout Staff</button>
+    </div>
+
+    <!-- ⑤ ALREADY CHECKED IN (staff sees this) -->
+    <div id="viewAlready" class="card" style="display:none;">
+        <div class="icon icon-warning">⚠️</div>
+        <h1>Already Checked In</h1>
+        <p class="subtitle">This ticket has already been used.</p>
+        <div class="details">
+            <div class="row"><div class="lbl">Team</div><div class="val" id="dup_team"></div></div>
+            <div class="row"><div class="lbl">Leader</div><div class="val" id="dup_leader"></div></div>
+        </div>
+    </div>
+
+    <!-- ⑥ INVALID TICKET -->
+    <div id="viewError" class="card" style="display:none;">
+        <div class="icon icon-error">❌</div>
+        <h1>Invalid Ticket</h1>
+        <p class="subtitle">This QR code is not registered. Please proceed to the help desk.</p>
+    </div>
+
+    <p class="footer">ENERGIZE 2026 — EVENT MANAGEMENT</p>
+</div>
+
+<script>
+    /* ── Template data injected by server ── */
+    const DATA = {
+        success:         <?= success ? 'true' : 'false' ?>,
+        teamName:        <?= success ? ('"' + teamName + '"')    : '""' ?>,
+        leaderName:      <?= success ? ('"' + leaderName + '"')  : '""' ?>,
+        track:           <?= success ? ('"' + track + '"')       : '""' ?>,
+        alreadyCheckedIn:<?= (success && alreadyCheckedIn) ? 'true' : 'false' ?>
+    };
+
+    /* ── Staff credentials (localStorage) ── */
+    let staff = {
+        passcode: localStorage.getItem('eng26_passcode'),
+        name:     localStorage.getItem('eng26_name'),
+        venue:    localStorage.getItem('eng26_venue')
+    };
+    const hasSession = () => staff.passcode && staff.name && staff.venue;
+
+    /* ── Boot ── */
+    window.onload = function () {
+        if (!DATA.success) { show('viewError'); return; }
+
+        if (hasSession()) {
+            // Staff device — auto check-in
+            if (DATA.alreadyCheckedIn) {
+                populateDup();
+                show('viewAlready');
+            } else {
+                show('viewLoading');
+                doCheckIn();
+            }
+        } else {
+            // Public device — just show ticket info
+            populatePublic();
+            show('viewPublic');
+        }
+    };
+
+    /* ── Views ── */
+    function show(id) {
+        ['viewLoading','viewLogin','viewPublic','viewSuccess','viewAlready','viewError']
+            .forEach(v => document.getElementById(v).style.display = v === id ? 'block' : 'none');
+    }
+
+    function showLogin() {
+        loadVenues();
+        show('viewLogin');
+    }
+
+    function showPublicView() {
+        populatePublic();
+        show('viewPublic');
+    }
+
+    /* ── Populate ── */
+    function populatePublic() {
+        document.getElementById('pub_team').textContent   = DATA.teamName;
+        document.getElementById('pub_leader').textContent = DATA.leaderName;
+        document.getElementById('pub_track').textContent  = DATA.track;
+        document.getElementById('pub_status').textContent =
+            DATA.alreadyCheckedIn ? '● Checked In' : '● Pending Entrance';
+        document.getElementById('pub_status').style.color =
+            DATA.alreadyCheckedIn ? '#22c55e' : '#f59e0b';
+    }
+
+    function populateDup() {
+        document.getElementById('dup_team').textContent   = DATA.teamName;
+        document.getElementById('dup_leader').textContent = DATA.leaderName;
+    }
+
+    /* ── Venues loader ── */
+    function loadVenues() {
+        google.script.run
+            .withSuccessHandler(venues => {
+                const sel = document.getElementById('inVenue');
+                // Clear existing options except placeholder
+                while (sel.options.length > 1) sel.remove(1);
+                venues.forEach(v => {
+                    const o = document.createElement('option');
+                    o.value = o.textContent = v;
+                    sel.appendChild(o);
+                });
+            })
+            .getVenues();
+    }
+
+    /* ── Staff Login ── */
+    function doStaffLogin() {
+        const p = document.getElementById('inPasscode').value.trim();
+        const n = document.getElementById('inName').value.trim();
+        const v = document.getElementById('inVenue').value;
+        if (!p || !n || !v) { alert('Please fill in all fields.'); return; }
+
+        show('viewLoading');
+        google.script.run
+            .withSuccessHandler(ok => {
+                if (ok) {
+                    localStorage.setItem('eng26_passcode', p);
+                    localStorage.setItem('eng26_name',     n);
+                    localStorage.setItem('eng26_venue',    v);
+                    staff = { passcode: p, name: n, venue: v };
+
+                    if (DATA.alreadyCheckedIn) {
+                        populateDup(); show('viewAlready');
+                    } else {
+                        doCheckIn();
+                    }
+                } else {
+                    show('viewLogin');
+                    alert('Incorrect passcode. Try again.');
+                }
+            })
+            .withFailureHandler(() => { show('viewLogin'); alert('Server error.'); })
+            .verifyPasscode(p);
+    }
+
+    /* ── Perform Check-In ── */
+    function doCheckIn() {
+        // Extract token from current URL
+        const token = new URLSearchParams(window.location.search).get('id');
+        google.script.run
+            .withSuccessHandler(res => {
+                if (res.success && !res.alreadyIn) {
+                    document.getElementById('succ_team').textContent   = DATA.teamName;
+                    document.getElementById('succ_leader').textContent = DATA.leaderName;
+                    document.getElementById('succ_track').textContent  = DATA.track;
+                    document.getElementById('succ_by').textContent     = staff.name + ' · ' + staff.venue;
+                    show('viewSuccess');
+                } else if (res.alreadyIn) {
+                    populateDup(); show('viewAlready');
+                } else {
+                    show('viewError');
+                }
+            })
+            .withFailureHandler(err => {
+                alert('Check-in failed: ' + err.message);
+                populatePublic(); show('viewPublic');
+            })
+            .processScan(token, staff.venue, staff.name, staff.passcode);
+    }
+
+    /* ── Logout ── */
+    function resetStaff() {
+        if (confirm('Clear staff session from this device?')) {
+            ['eng26_passcode','eng26_name','eng26_venue'].forEach(k => localStorage.removeItem(k));
+            location.reload();
+        }
+    }
+</script>
+</body>
+</html>

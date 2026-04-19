@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: white; padding: 40px 20px; textAlign: center; }
+        .header h1 { margin: 0; font-size: 28px; letter-spacing: 1px; }
+        .content { padding: 30px; line-height: 1.6; color: #374151; }
+        .ticket-box { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+        .qr-image { width: 200px; height: 200px; margin: 10px auto; display: block; }
+        .team-info { margin-top: 20px; font-weight: 600; font-size: 18px; color: #1e1b4b; }
+        .footer { padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; background: #f8fafc; }
+        .btn { background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" style="text-align: center;">
+            <h1>⚡ <?= eventName ?></h1>
+            <p style="opacity: 0.8;">Your Official Entry Ticket</p>
+        </div>
+        <div class="content">
+            <p>Hello <strong><?= leaderName ?></strong>,</p>
+            <p>Get ready for <strong><?= eventName ?></strong>! Your team registration for <strong><?= teamName ?></strong> has been successfully processed.</p>
+            
+            <div class="ticket-box">
+                <p style="margin-bottom: 5px; color: #64748b; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Scan at Entrance</p>
+                <img src="<?= qrUrl ?>" class="qr-image" alt="QR Code">
+                <div class="team-info"><?= teamName ?></div>
+                <p style="font-size: 14px; color: #6366f1; font-weight: bold;">Unique Pass: <?= leaderName ?></p>
+            </div>
+            
+            <p>Please present this QR code at the registration desk upon arrival. You can show it on your mobile device or bring a printed copy.</p>
+            
+            <p style="text-align: center;">
+                <a href="#" class="btn">View Event Schedule</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 <?= eventName ?> | Technical Event Management System</p>
+            <p>If you have any questions, reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

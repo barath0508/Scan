@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Energize 2026 | Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Using jsDelivr CDN (more reliable) -->
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #0f172a;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #staffLabel { font-size: 13px; font-weight: 700; }
+        #venueDisplay {
+            background: var(--primary);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        #reader-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #reader {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+
+        /* Hide default html5-qrcode UI clutter */
+        #reader video { object-fit: cover; width: 100% !important; height: 100% !important; }
+        #reader img { display: none !important; }
+        #reader__scan_region { height: 100% !important; }
+        #reader__dashboard { display: none !important; }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border: 6px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .scan-box {
+            width: 260px;
+            height: 260px;
+            border: 2.5px solid rgba(255,255,255,0.5);
+            border-radius: 24px;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+        }
+
+        /* Camera not ready state */
+        #cameraPlaceholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            background: #000;
+        }
+
+        #startCameraBtn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* AUTH OVERLAY */
+        #authOverlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .auth-card {
+            background: rgba(255,255,255,0.05);
+            padding: 28px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+        }
+
+        .auth-card h1 { margin: 0 0 8px; font-size: 22px; }
+        .auth-card p { color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
+
+        input, select {
+            width: 100%;
+            padding: 13px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 12px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        select option { background: #1e293b; }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            margin-top: 4px;
+        }
+
+        /* STATUS POPUP */
+        #statusPopup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.85);
+            background: rgba(10, 15, 30, 0.97);
+            backdrop-filter: blur(20px);
+            padding: 28px 24px;
+            border-radius: 24px;
+            text-align: center;
+            z-index: 300;
+            width: 85%;
+            max-width: 300px;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: none;
+            opacity: 0;
+            transition: all 0.25s ease;
+        }
+
+        #statusPopup.show {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #statusIcon { font-size: 48px; margin-bottom: 10px; }
+        #statusTitle { font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+        #statusMsg { font-size: 13px; color: #94a3b8; margin: 0; }
+
+        .flash-success { border-color: var(--success) !important; }
+        .flash-error   { border-color: var(--error) !important; }
+
+        #logoutBtn {
+            position: absolute;
+            bottom: 14px; right: 14px;
+            background: rgba(239,68,68,0.15);
+            color: #ef4444;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- AUTH OVERLAY -->
+    <div id="authOverlay">
+        <div class="auth-card">
+            <h1>🔐 Scanner Login</h1>
+            <p>Enter your details to begin scanning.</p>
+            <input type="password" id="authPasscode" placeholder="Event Passcode" autocomplete="off">
+            <input type="text" id="authName" placeholder="Your Full Name">
+            <select id="authVenue">
+                <option value="" disabled selected>Select Your Venue</option>
+            </select>
+            <button class="btn-primary" onclick="saveAuth()">Start Scanning →</button>
+        </div>
+    </div>
+
+    <!-- MAIN SCANNER UI -->
+    <header>
+        <div>
+            <div id="staffLabel" style="font-weight:700;">ENERGIZE 2026</div>
+            <div style="font-size:10px;color:#64748b;letter-spacing:1px;">EVENT SCANNER</div>
+        </div>
+        <div id="venueDisplay" onclick="resetAuth()">Tap to change</div>
+    </header>
+
+    <div id="reader-container">
+        <!-- Camera placeholder shown before camera starts -->
+        <div id="cameraPlaceholder">
+            <div style="font-size:48px;">📷</div>
+            <p style="color:#94a3b8;margin:0;">Camera will start automatically</p>
+            <button id="startCameraBtn" onclick="startScanner()">Tap to Start Camera</button>
+        </div>
+
+        <div id="reader"></div>
+        <div class="overlay" id="scanOverlay"><div class="scan-box"></div></div>
+        <div id="logoutBtn" onclick="resetAuth()">Logout</div>
+    </div>
+
+    <div id="statusPopup">
+        <div id="statusIcon">✅</div>
+        <div id="statusTitle">Success</div>
+        <p id="statusMsg"></p>
+    </div>
+
+    <script>
+        let scanner = null;
+        let isProcessing = false;
+
+        const credentials = {
+            passcode: localStorage.getItem('eng26_passcode'),
+            name:     localStorage.getItem('eng26_name'),
+            venue:    localStorage.getItem('eng26_venue')
+        };
+
+        window.onload = function () {
+            loadVenues();
+            if (credentials.passcode && credentials.name && credentials.venue) {
+                hideAuth();
+                startScanner();
+            }
+        };
+
+        /* ── VENUES ── */
+        function loadVenues() {
+            google.script.run
+                .withSuccessHandler(venues => {
+                    const sel = document.getElementById('authVenue');
+                    venues.forEach(v => {
+                        const o = document.createElement('option');
+                        o.value = o.textContent = v;
+                        sel.appendChild(o);
+                    });
+                })
+                .withFailureHandler(() => {
+                    // If server call fails, add default venues
+                    ['Main Entrance','Registration Desk','Hall A','Food Court'].forEach(v => {
+                        const o = document.createElement('option');
+                        o.value = o.textContent = v;
+                        document.getElementById('authVenue').appendChild(o);
+                    });
+                })
+                .getVenues();
+        }
+
+        /* ── AUTH ── */
+        function saveAuth() {
+            const p = document.getElementById('authPasscode').value.trim();
+            const n = document.getElementById('authName').value.trim();
+            const v = document.getElementById('authVenue').value;
+            if (!p || !n || !v) { alert('Please fill in all fields.'); return; }
+
+            google.script.run
+                .withSuccessHandler(ok => {
+                    if (ok) {
+                        localStorage.setItem('eng26_passcode', p);
+                        localStorage.setItem('eng26_name', n);
+                        localStorage.setItem('eng26_venue', v);
+                        credentials.passcode = p;
+                        credentials.name = n;
+                        credentials.venue = v;
+                        hideAuth();
+                        startScanner();
+                    } else {
+                        alert('❌ Incorrect passcode. Please try again.');
+                    }
+                })
+                .withFailureHandler(() => alert('Server error. Check your connection.'))
+                .verifyPasscode(p);
+        }
+
+        function hideAuth() {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('staffLabel').textContent = credentials.name;
+            document.getElementById('venueDisplay').textContent = credentials.venue;
+        }
+
+        function resetAuth() {
+            if (confirm('Logout and reset staff details?')) {
+                ['eng26_passcode','eng26_name','eng26_venue'].forEach(k => localStorage.removeItem(k));
+                location.reload();
+            }
+        }
+
+        /* ── CAMERA ── */
+        function startScanner() {
+            document.getElementById('cameraPlaceholder').style.display = 'none';
+
+            scanner = new Html5Qrcode('reader');
+
+            Html5Qrcode.getCameras()
+                .then(cameras => {
+                    if (!cameras || cameras.length === 0) {
+                        showCameraError('No camera found on this device.');
+                        return;
+                    }
+
+                    // Prefer back camera
+                    const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+
+                    scanner.start(
+                        cam.id,
+                        { fps: 15, qrbox: { width: 250, height: 250 } },
+                        onScanSuccess
+                    ).catch(err => showCameraError(err));
+                })
+                .catch(err => {
+                    // Fallback: use facingMode directly
+                    scanner.start(
+                        { facingMode: 'environment' },
+                        { fps: 15, qrbox: { width: 250, height: 250 } },
+                        onScanSuccess
+                    ).catch(e => showCameraError(e));
+                });
+        }
+
+        function showCameraError(msg) {
+            document.getElementById('cameraPlaceholder').style.display = 'flex';
+            document.getElementById('cameraPlaceholder').innerHTML = `
+                <div style="font-size:48px">📷</div>
+                <p style="color:#ef4444;padding:0 20px;text-align:center;">${msg}<br><br>Please allow camera permission and tap below.</p>
+                <button id="startCameraBtn" onclick="startScanner()">Retry Camera</button>`;
+        }
+
+        /* ── SCAN SUCCESS ── */
+        function onScanSuccess(decodedText) {
+            if (isProcessing) return;
+            isProcessing = true;
+            if (navigator.vibrate) navigator.vibrate(60);
+
+            let tokenId = decodedText;
+            try {
+                const u = new URL(decodedText);
+                tokenId = u.searchParams.get('id') || decodedText;
+            } catch (_) {}
+
+            google.script.run
+                .withSuccessHandler(res => {
+                    const overlay = document.getElementById('scanOverlay');
+                    if (res.success) {
+                        showStatus(
+                            res.alreadyIn ? '⚠️' : '✅',
+                            res.alreadyIn ? 'Already Scanned' : 'Welcome!',
+                            res.teamName
+                        );
+                        overlay.classList.add(res.alreadyIn ? 'flash-error' : 'flash-success');
+                    } else {
+                        showStatus('❌', 'Invalid QR', res.message || 'Ticket not found');
+                        overlay.classList.add('flash-error');
+                    }
+                    setTimeout(() => {
+                        overlay.classList.remove('flash-success', 'flash-error');
+                        isProcessing = false;
+                        hideStatusPopup();
+                    }, 2500);
+                })
+                .withFailureHandler(err => {
+                    showStatus('❌', 'Server Error', err.message);
+                    setTimeout(() => { isProcessing = false; hideStatusPopup(); }, 3000);
+                })
+                .processScan(tokenId, credentials.venue, credentials.name, credentials.passcode);
+        }
+
+        function showStatus(icon, title, msg) {
+            document.getElementById('statusIcon').textContent = icon;
+            document.getElementById('statusTitle').textContent = title;
+            document.getElementById('statusMsg').textContent = msg;
+            document.getElementById('statusPopup').classList.add('show');
+        }
+
+        function hideStatusPopup() {
+            document.getElementById('statusPopup').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
