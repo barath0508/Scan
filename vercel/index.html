@@ -250,8 +250,8 @@
 
 <!-- ══════════ CONFIG — EDIT THIS ══════════ -->
 <script>
-    // 🔧 PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyCoW8NXCd33y13w70m2dwq1MJY0d2w4hep0NN4Cij_IVPZeDmLKv6eSOn5rVKEkNBE/exec';
+    // 🔧 Send requests to the local Vercel serverless function to bypass CORS
+    const API_URL = '/api/proxy';
 </script>
 
 <!-- ══════════ LOGIN ══════════ -->
@@ -398,11 +398,10 @@ window.onload = async () => {
    API HELPER
 ════════════════════════════════════════ */
 async function api(params) {
-    const url = new URL(GAS_URL);
+    const url = new URL(API_URL, window.location.origin);
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
     const res = await fetch(url.toString(), {
-        method: 'GET',
-        redirect: 'follow'
+        method: 'GET'
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
