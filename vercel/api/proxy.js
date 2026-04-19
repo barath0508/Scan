@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   // Build GAS URL with all query params forwarded
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxpgTdG7U15wMk6zkLtmaXaqBZ5KnNq6hQo_YQy3oGXZl-JyOInayI9yfpGV3DVT7O1/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbwg6hM4oxWnxSTv9RXVdGMdJY4Q6oB2lDl4dIwrthh5tbx0zOPkTqS4nhm_NrRo1sl0/exec';
   const queryString = req.url.split('?')[1] || '';
   const url     = `${GAS_URL}?${queryString}`;
 
